@@ -33,12 +33,11 @@ module Unix = struct
 
     let merge = Array.append
 
-    let with_env env ~cmd =
+    let with_env env ~f =
       let initial_env = get () in
       let temp_env = merge initial_env env in
       set temp_env;
-      let exit_code = Sys.command cmd in
+      f ();
       set initial_env;
-      exit_code
   end
 end

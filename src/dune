@@ -1,3 +1,3 @@
 (library
  (name tim_lang)
- (libraries base unix))
+ (libraries ast core))

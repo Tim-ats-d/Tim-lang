@@ -16,6 +16,6 @@ module Unix : sig
 
     val merge : t -> t -> t
 
-    val with_env : t -> cmd:string -> int
+    val with_env : t -> f:(unit -> unit) -> unit
   end
 end

@@ -1,0 +1,9 @@
+set foo to "ls -l"
+tell foo to -a "." end
+
+with LANG = "fr" and BAR = "bar"
+  # Foo
+  tell "echo" to -e "$BAR$FOO" end
+end
+
+tell "echo" to "$LANG" end

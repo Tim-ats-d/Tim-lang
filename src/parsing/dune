@@ -1,0 +1,8 @@
+(library
+ (name parsing)
+ (libraries ast utils))
+
+(ocamllex lexer)
+
+(menhir
+ (modules parser))
