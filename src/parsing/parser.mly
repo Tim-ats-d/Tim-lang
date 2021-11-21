@@ -14,9 +14,12 @@
 %token LBRACKET RBRACKET
 %token COMMA
 
-%token EQ
+%token UNIT ELLIPSIS
 
-%token TINT TSTRING TCMD TLIST
+%token EQ
+%token TRUE FALSE
+
+%token TBOOL TINT TSTRING TCMD TLIST
 
 %token LET
 %token IF THEN ELSE
@@ -37,23 +40,17 @@ let program :=
 
 let stmt :=
   | assign
-  | with_
-  | for_
   | e=expr; { Expr e }
 
 let assign ==
-  | LET; name=IDENT; EQ; value=sub_expr; { Assign { name; value } }
-
-let with_ ==
-  | WITH; vars=vars; body=stmt; END; { With { vars; body } }
-
-let for_ ==
-  | FOR; name=IDENT; IN; iter=expr; DO; body=stmt*; END;
-    { For { name; iter; body } }
+  | LET; name=IDENT; EQ; value=expr; { Assign { name; value } }
 
 let expr :=
   | sub_expr
   | cast
+  | if_then_else
+  | with_
+  | for_
   | tell
 
 let sub_expr :=
@@ -64,16 +61,27 @@ let cast ==
   | from=sub_expr; AS; to_=type_; { Cast { from; to_ } }
 
 let type_ ==
+  | TBOOL; { Ast.Type.Bool }
   | TINT; { Ast.Type.Int }
   | TSTRING; { Ast.Type.String }
   | TCMD; { Ast.Type.Cmd }
   | TLIST; { Ast.Type.List }
 
 let terminal ==
+  | UNIT; { Unit }
+  | bool
+  | int
   | name
   | string
-  | int
+  | ELLIPSIS; { Ellipsis }
   | list_
+
+let bool ==
+  | TRUE; { Bool true }
+  | FALSE; { Bool false }
+
+let int ==
+  | i=INT; { Int i }
 
 let name ==
   | n=IDENT; { Name n }
@@ -81,11 +89,20 @@ let name ==
 let string ==
   | s=STRING; { String s }
 
-let int ==
-  | i=INT; { Int i }
-
 let list_ ==
-  | LBRACKET; l=separated_list(COMMA, expr); RBRACKET; { List (List.to_seq l) }
+  | LBRACKET; l=separated_list(COMMA, expr); RBRACKET;
+    { List (List.to_seq l) }
+
+let if_then_else ==
+  | IF; cond=expr; THEN; body=expr; ELSE; orelse=expr; END;
+    { IfThenElse { cond; body; orelse } }
+
+let with_ ==
+  | WITH; vars=vars; body=stmt; END; { With { vars; body } }
+
+let for_ ==
+  | FOR; name=IDENT; IN; iter=expr; DO; body=stmt*; END;
+    { For { name; iter; body } }
 
 let tell :=
   | TELL; cmd=sub_expr;

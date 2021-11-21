@@ -8,12 +8,30 @@ and eval_stmt env = function
       let value = eval_expr env value in
       eval_assign env ~name ~value
   | Expr expr -> eval_expr env expr |> ignore
-  | With { vars; body } -> eval_with env ~body ~vars
-  | For { name; iter; body } -> eval_for env ~name ~iter ~body
 
 and eval_stmts env stmts = List.iter (eval_stmt env) stmts
 
 and eval_assign env ~name ~value = Env.set env ~name ~value
+
+and eval_expr env = function
+  | Unit -> Value.VUnit
+  | Bool b -> Value.bool b
+  | Int i -> Value.int i
+  | String s -> Value.string s
+  | Name name -> Env.find_exn env ~name
+  | Ellipsis -> Value.VEllipsis
+  | Cmd { name; args } -> Value.cmd ~name ~args
+  | List l -> Seq.map (eval_expr env) l |> Value.list
+
+  | Cast { from; to_ } ->
+      let from = eval_expr env from in
+      Type.cast ~from ~to_
+  | IfThenElse { cond; body; orelse } ->
+      let cond = Value.to_bool @@ eval_expr env cond in
+      if cond then eval_expr env body else eval_expr env orelse
+  | Tell { cmd; args } -> eval_tell env ~cmd ~args
+  | With { vars; body } -> eval_with env ~body ~vars
+  | For { name; iter; body } -> eval_for env ~name ~iter ~body
 
 and eval_with env ~body ~vars =
   let temp_env =
@@ -24,29 +42,19 @@ and eval_with env ~body ~vars =
         | _ -> failwith "must be string")
       vars
   in
-  Unix.Env.with_env temp_env ~f:(fun () -> eval_stmt env body)
+  Unix.Env.with_env temp_env ~f:(fun () -> eval_stmt env body);
+  Value.VUnit
 
 and eval_for env ~name ~iter ~body =
   let iter = eval_expr env iter |> Value.to_seq in
   let rec loop = function
-    | Seq.Nil -> ()
+    | Seq.Nil -> Value.VUnit
     | Seq.Cons (value, rest) ->
         eval_assign env ~name ~value;
         eval_stmts env body;
         loop (rest ())
   in
   loop (iter ())
-
-and eval_expr env = function
-  | Name name -> Env.find_exn env ~name
-  | String s -> Value.string s
-  | Int i -> Value.int i
-  | List l -> Seq.map (eval_expr env) l |> Value.list
-  | Cmd { name; args } -> Value.cmd ~name ~args
-  | Cast { from; to_ } ->
-      let from = eval_expr env from in
-      Type.cast ~from ~to_
-  | Tell { cmd; args } -> eval_tell env ~cmd ~args
 
 and eval_tell env ~cmd ~args =
   let cmd_value =

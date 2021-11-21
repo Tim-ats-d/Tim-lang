@@ -29,12 +29,20 @@ rule token = parse
   | '['        { LBRACKET }
   | ']'        { RBRACKET }
   | ','        { COMMA }
+  | "()"        { UNIT }
+  | "..."      { ELLIPSIS }
   | '='        { EQ }
+  | "true"     { TRUE }
+  | "false"    { FALSE }
+  | "bool"     { TBOOL }
   | "int"      { TINT }
   | "string"   { TSTRING }
   | "cmd"      { TCMD }
   | "list"     { TLIST }
   | "let"      { LET }
+  | "if"       { IF }
+  | "then"     { THEN }
+  | "else"     { ELSE }
   | "tell"     { TELL }
   | "with"     { WITH }
   | "as"       { AS }
