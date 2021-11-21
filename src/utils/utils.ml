@@ -38,6 +38,6 @@ module Unix = struct
       let temp_env = merge initial_env env in
       set temp_env;
       f ();
-      set initial_env;
+      set initial_env
   end
 end

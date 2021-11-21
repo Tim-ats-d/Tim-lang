@@ -5,16 +5,25 @@
 %}
 
 %token <string> IDENT
+%token <int> INT
 %token <string> FLAG
 %token <string> STRING
 %token <string> ENV_VAR
 
+%token TINT TSTRING TCMD TLIST
+
 %token EOF
 
-%token EQ
 %token LPARENT RPARENT
+%token LBRACKET RBRACKET
+%token COMMA
 
-%token TELL SET AND TO WITH END
+%token EQ
+
+%token LET
+%token TELL WITH AS
+%token FOR IN DO
+%token TO AND END
 
 %start program
 
@@ -29,31 +38,54 @@ let program :=
 let stmt :=
   | assign
   | with_
+  | for_
   | e=expr; { Expr e }
 
 let assign ==
-  | SET; name=IDENT; TO; value=sub_expr; { Assign { name; value } }
+  | LET; name=IDENT; EQ; value=sub_expr; { Assign { name; value } }
 
 let with_ ==
   | WITH; env_vars=vars; body=stmt; END; { With { env_vars; body } }
 
+let for_ ==
+  | FOR; name=IDENT; IN; iter=expr; DO; body=stmt*; END;
+    { For { name; iter; body } }
+
 let expr :=
   | sub_expr
+  | cast
   | tell
 
 let sub_expr :=
   | terminal
   | LPARENT; e=expr; RPARENT; { e }
 
+let cast ==
+  | target=sub_expr; AS; t=type_; { Cast { target; t} }
+
+let type_ ==
+  | TINT; { Ast.Type.Int }
+  | TSTRING; { Ast.Type.String }
+  | TCMD; { Ast.Type.Cmd }
+  | TLIST; { Ast.Type.List }
+
 let terminal ==
   | name
   | string
+  | int
+  | list_
 
 let name ==
   | n=IDENT; { Name n }
 
 let string ==
   | s=STRING; { String s }
+
+let int ==
+  | i=INT; { Int i }
+
+let list_ ==
+  | LBRACKET; l=separated_list(COMMA, expr); RBRACKET; { List (List.to_seq l) }
 
 let tell :=
   | TELL; cmd=sub_expr;
@@ -76,4 +108,4 @@ let and_var ==
 
 let arg :=
   | f=FLAG; { String f }
-  | t=terminal; { t }
+  | e=sub_expr; { e }

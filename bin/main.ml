@@ -1,3 +1,1 @@
-
-let () =
-  Core.Compiler.from_file "bin/foo.tim"
+let () = Core.Compiler.from_file "bin/foo.aplscr"

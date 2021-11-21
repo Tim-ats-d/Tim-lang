@@ -24,16 +24,30 @@ let flag = ('-'|"--") (alphanum)
 
 rule token = parse
   | comment { token lexbuf }
-  | "=" { EQ }
+  | '=' { EQ }
+  | '(' { LPARENT }
+  | ')' { RPARENT }
+  | '[' { LBRACKET }
+  | ']' { RBRACKET }
+  | ',' { COMMA }
+  | "int" { TINT }
+  | "string" { TSTRING }
+  | "cmd" { TCMD }
+  | "list" { TLIST }
+  | "let" { LET }
   | "tell" { TELL }
-  | "set" { SET }
-  | "and" { AND}
-  | "to" { TO }
   | "with" { WITH }
+  | "as" { AS }
+  | "to" { TO }
+  | "for" { FOR }
+  | "in" { IN }
+  | "do" { DO }
+  | "and" { AND }
   | "end" { END }
   | '"' { read_string lexbuf }
   | flag { FLAG (Lexing.lexeme lexbuf) }
   | ident { IDENT (Lexing.lexeme lexbuf) }
+  | digit+ { INT (int_of_string (Lexing.lexeme lexbuf)) }
   | env_var { ENV_VAR (Lexing.lexeme lexbuf) }
   | whitespace { token lexbuf }
   | newline { Lexing.new_line lexbuf; token lexbuf }
