@@ -1,9 +1,9 @@
 {
   open Parser
 
-  let string_acc: Buffer.t = Buffer.create 64
+  let buf = Buffer.create 64
 
-  exception Syntax_error of Lexing.lexbuf
+  exception Syntax_error of string * Lexing.lexbuf
 }
 
 let digit = ['0'-'9']
@@ -23,40 +23,43 @@ let env_var = (uppercase|digit|'_')*
 let flag = ('-'|"--") (alphanum)
 
 rule token = parse
-  | comment { token lexbuf }
-  | '=' { EQ }
-  | '(' { LPARENT }
-  | ')' { RPARENT }
-  | '[' { LBRACKET }
-  | ']' { RBRACKET }
-  | ',' { COMMA }
-  | "int" { TINT }
-  | "string" { TSTRING }
-  | "cmd" { TCMD }
-  | "list" { TLIST }
-  | "let" { LET }
-  | "tell" { TELL }
-  | "with" { WITH }
-  | "as" { AS }
-  | "to" { TO }
-  | "for" { FOR }
-  | "in" { IN }
-  | "do" { DO }
-  | "and" { AND }
-  | "end" { END }
-  | '"' { read_string lexbuf }
-  | flag { FLAG (Lexing.lexeme lexbuf) }
-  | ident { IDENT (Lexing.lexeme lexbuf) }
-  | digit+ { INT (int_of_string (Lexing.lexeme lexbuf)) }
-  | env_var { ENV_VAR (Lexing.lexeme lexbuf) }
+  | comment    { Lexing.new_line lexbuf; token lexbuf }
+  | '('        { LPARENT }
+  | ')'        { RPARENT }
+  | '['        { LBRACKET }
+  | ']'        { RBRACKET }
+  | ','        { COMMA }
+  | '='        { EQ }
+  | "int"      { TINT }
+  | "string"   { TSTRING }
+  | "cmd"      { TCMD }
+  | "list"     { TLIST }
+  | "let"      { LET }
+  | "tell"     { TELL }
+  | "with"     { WITH }
+  | "as"       { AS }
+  | "to"       { TO }
+  | "for"      { FOR }
+  | "in"       { IN }
+  | "do"       { DO }
+  | "and"      { AND }
+  | "end"      { END }
+  | '"'        { read_string lexbuf }
+  | flag       { FLAG (Lexing.lexeme lexbuf) }
+  | ident      { IDENT (Lexing.lexeme lexbuf) }
+  | digit+     { INT (int_of_string (Lexing.lexeme lexbuf)) }
+  | env_var    { ENV_VAR (Lexing.lexeme lexbuf) }
   | whitespace { token lexbuf }
-  | newline { Lexing.new_line lexbuf; token lexbuf }
-  | eof { EOF }
-  | _ { raise (Syntax_error lexbuf) }
+  | newline    { Lexing.new_line lexbuf; token lexbuf }
+  | eof        { EOF }
+  | _          { raise (Syntax_error ("lexing error", lexbuf)) }
 
 and read_string = parse
-  | '"' { let c = Buffer.contents string_acc in Buffer.clear string_acc; STRING c }
-  | '\\' '"' { Buffer.add_char string_acc '"'; read_string lexbuf }
-  | [^ '"'] { Buffer.add_string string_acc (Lexing.lexeme lexbuf); read_string lexbuf }
-  | eof { failwith "string literal is never terminated" }
-  | _ { failwith ("Character not allowed in string literal: '" ^ Lexing.lexeme lexbuf ^ "'") }
+  | '"'      { let c = Buffer.contents buf in
+               Buffer.clear buf; STRING c }
+  | '\\' '"' { Buffer.add_char buf '"'; read_string lexbuf }
+  | [^ '"']  { Buffer.add_string buf (Lexing.lexeme lexbuf); read_string lexbuf }
+  | eof      { let msg = "string literal is never terminated" in
+               raise (Syntax_error (msg, lexbuf)) }
+  | _        { let msg = Printf.sprintf "Character not allowed in string literal: '%s'" @@ Lexing.lexeme lexbuf in
+               raise (Syntax_error (msg, lexbuf)) }

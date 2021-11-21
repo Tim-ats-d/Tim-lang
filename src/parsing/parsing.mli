@@ -1,1 +1,1 @@
-val parse : Lexing.lexbuf -> (Ast.Ast_types.program option, string) result
+val parse : Lexing.lexbuf -> (Ast.Ast_types.program, string) result

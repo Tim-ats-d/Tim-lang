@@ -10,30 +10,30 @@
 %token <string> STRING
 %token <string> ENV_VAR
 
-%token TINT TSTRING TCMD TLIST
-
-%token EOF
-
 %token LPARENT RPARENT
 %token LBRACKET RBRACKET
 %token COMMA
 
 %token EQ
 
+%token TINT TSTRING TCMD TLIST
+
 %token LET
+%token IF THEN ELSE
 %token TELL WITH AS
 %token FOR IN DO
 %token TO AND END
 
+%token EOF
+
 %start program
 
-%type <program option> program
+%type <program> program
 
 %%
 
 let program :=
-  | EOF; { None }
-  | slist=stmt+; EOF; { Some slist }
+  | slist=stmt*; EOF; { slist }
 
 let stmt :=
   | assign
@@ -45,7 +45,7 @@ let assign ==
   | LET; name=IDENT; EQ; value=sub_expr; { Assign { name; value } }
 
 let with_ ==
-  | WITH; env_vars=vars; body=stmt; END; { With { env_vars; body } }
+  | WITH; vars=vars; body=stmt; END; { With { vars; body } }
 
 let for_ ==
   | FOR; name=IDENT; IN; iter=expr; DO; body=stmt*; END;
@@ -61,7 +61,7 @@ let sub_expr :=
   | LPARENT; e=expr; RPARENT; { e }
 
 let cast ==
-  | target=sub_expr; AS; t=type_; { Cast { target; t} }
+  | from=sub_expr; AS; to_=type_; { Cast { from; to_ } }
 
 let type_ ==
   | TINT; { Ast.Type.Int }

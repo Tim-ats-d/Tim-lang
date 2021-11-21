@@ -1,1 +1,1 @@
-let () = Core.Compiler.from_file "bin/foo.aplscr"
+let () = Core.Compiler.from_file "bin/foo.applescript"
