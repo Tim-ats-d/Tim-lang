@@ -26,11 +26,14 @@ rule token = parse
   | comment    { Lexing.new_line lexbuf; token lexbuf }
   | '('        { LPARENT }
   | ')'        { RPARENT }
-  | '['        { LBRACKET }
-  | ']'        { RBRACKET }
+  (* | '['        { LBRACKET }
+  | ']'        { RBRACKET } *)
+  | '{'        { LBRACE }
+  | '}'        { RBRACE }
   | ','        { COMMA }
-  | "()"        { UNIT }
-  | "..."      { ELLIPSIS }
+  | "<-"       { LEFT_ARROW }
+  | '|'        { PIPE }
+  | "()"       { UNIT }
   | '='        { EQ }
   | "true"     { TRUE }
   | "false"    { FALSE }

@@ -1,13 +1,12 @@
 open Value
 
-type t = Unit | Bool | Int | String | Ellipsis | Cmd | List
+type t = Unit | Bool | Int | String | Cmd | List
 
 let of_value = function
   | VUnit -> Unit
   | VBool _ -> Bool
   | VInt _ -> Int
   | VString _ -> String
-  | VEllipsis -> Ellipsis
   | VCmd _ -> Cmd
   | VList _ -> List
 
@@ -16,7 +15,6 @@ let to_string = function
   | Bool -> "Bool"
   | Int -> "Int"
   | String -> "String"
-  | Ellipsis -> "Ellipsis"
   | Cmd -> "Cmd"
   | List -> "List"
 

@@ -19,19 +19,19 @@ and eval_expr env = function
   | Int i -> Value.int i
   | String s -> Value.string s
   | Name name -> Env.find_exn env ~name
-  | Ellipsis -> Value.VEllipsis
   | Cmd { name; args } -> Value.cmd ~name ~args
   | List l -> Seq.map (eval_expr env) l |> Value.list
-
   | Cast { from; to_ } ->
       let from = eval_expr env from in
       Type.cast ~from ~to_
   | IfThenElse { cond; body; orelse } ->
       let cond = Value.to_bool @@ eval_expr env cond in
       if cond then eval_expr env body else eval_expr env orelse
-  | Tell { cmd; args } -> eval_tell env ~cmd ~args
   | With { vars; body } -> eval_with env ~body ~vars
   | For { name; iter; body } -> eval_for env ~name ~iter ~body
+  | ListCompr { name; iter; cond; body } ->
+      eval_list_compr env ~name ~iter ~cond ~body
+  | Tell { cmd; args } -> eval_tell env ~cmd ~args
 
 and eval_with env ~body ~vars =
   let temp_env =
@@ -55,6 +55,20 @@ and eval_for env ~name ~iter ~body =
         loop (rest ())
   in
   loop (iter ())
+
+and eval_list_compr env ~name ~iter ~cond ~body =
+  let iter = eval_expr env iter |> Value.to_seq in
+  let rec loop acc = function
+    | Seq.Nil -> acc
+    | Seq.Cons (value, rest) ->
+        eval_assign env ~name ~value;
+        let cond = Value.to_bool @@ eval_expr env cond in
+        if cond then
+          let acc' = Seq.(cons (eval_expr env body) acc) in
+          loop acc' (rest ())
+        else loop acc (rest ())
+  in
+  loop Seq.empty (iter ()) |> Value.list
 
 and eval_tell env ~cmd ~args =
   let cmd_value =

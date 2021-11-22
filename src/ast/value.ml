@@ -3,7 +3,6 @@ type t =
   | VBool of bool
   | VInt of int
   | VString of string
-  | VEllipsis
   | VCmd of { name : string; args : string list }
   | VList of t Seq.t
 

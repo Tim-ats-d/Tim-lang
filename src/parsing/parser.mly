@@ -11,10 +11,12 @@
 %token <string> ENV_VAR
 
 %token LPARENT RPARENT
-%token LBRACKET RBRACKET
+// %token LBRACKET RBRACKET
+%token LBRACE RBRACE
 %token COMMA
+%token LEFT_ARROW PIPE
 
-%token UNIT ELLIPSIS
+%token UNIT
 
 %token EQ
 %token TRUE FALSE
@@ -51,6 +53,7 @@ let expr :=
   | if_then_else
   | with_
   | for_
+  | list_compr
   | tell
 
 let sub_expr :=
@@ -73,7 +76,6 @@ let terminal ==
   | int
   | name
   | string
-  | ELLIPSIS; { Ellipsis }
   | list_
 
 let bool ==
@@ -90,10 +92,12 @@ let string ==
   | s=STRING; { String s }
 
 let list_ ==
-  | LBRACKET; l=separated_list(COMMA, expr); RBRACKET;
+  | LBRACE; l=separated_list(COMMA, expr); RBRACE;
     { List (List.to_seq l) }
 
 let if_then_else ==
+  | IF; cond=expr; THEN; body=expr; END;
+    { IfThenElse { cond; body; orelse = Unit } }
   | IF; cond=expr; THEN; body=expr; ELSE; orelse=expr; END;
     { IfThenElse { cond; body; orelse } }
 
@@ -103,6 +107,10 @@ let with_ ==
 let for_ ==
   | FOR; name=IDENT; IN; iter=expr; DO; body=stmt*; END;
     { For { name; iter; body } }
+
+let list_compr ==
+  | LBRACE; body=expr; PIPE; name=IDENT; LEFT_ARROW; iter=expr; PIPE; cond=expr; RBRACE;
+    { ListCompr { name; iter; cond; body } }
 
 let tell :=
   | TELL; cmd=sub_expr;

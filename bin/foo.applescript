@@ -1,7 +1,7 @@
 # let foo = "ls -l"
 # tell foo to -a "." end
 
-for i in [ 1, 2, 3 ] do
+for i in { 1, 2, 3 } do
   let error_code = ((tell "echo" to (i as string) end) as string)
 
   if true then
@@ -12,3 +12,5 @@ for i in [ 1, 2, 3 ] do
     end
   end
 end
+
+let comp = { x | x <- {1, 2} | true }
